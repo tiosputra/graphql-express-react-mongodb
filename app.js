@@ -5,18 +5,35 @@ const { buildSchema } = require('graphql');
 
 const app = express();
 
+const events = [];
+
 app.use(bodyParser.json());
 
 app.use(
   '/graphql',
   graphqlHttp({
     schema: buildSchema(`
+        type Event {
+          _id: ID!
+          title: String!
+          description: String!
+          price: Float!
+          date: String!
+        }
+
+        input EventInput {
+          title: String!
+          description: String!
+          price: Float!
+          date: String!
+        }
+
         type RootQuery {
-            events: [String!]!
+            events: [Event!]!
         }
 
         type RootMutation {
-            createEvent(name: String): String
+            createEvent(eventInput: EventInput): Event
         }
 
         schema {
@@ -26,16 +43,27 @@ app.use(
     `),
     rootValue: {
       events: () => {
-        return ['Romantic Cooking', 'Sailing', 'All-night Coding'];
+        return events;
       },
       createEvent: args => {
-        const eventName = args.name;
-        return eventName;
+        const data = args.eventInput;
+        const event = {
+          _id: Math.random().toString(),
+          title: data.title,
+          description: data.description,
+          price: data.price,
+          date: data.date
+        };
+
+        events.push(event);
+
+        return event;
       }
     },
     graphiql: true
   })
 );
 
-const PORT = 5000 || process.env.PORT;
-app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
+app.listen((PORT = 5000 || process.env.PORT), () =>
+  console.log(`Listening on port ${PORT}`)
+);
