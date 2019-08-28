@@ -1,9 +1,12 @@
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const User = require("../../models/user");
 const { events } = require("./merge");
 
 module.exports = {
-  users: async () => {
+  users: async (args, req) => {
+    if (!req.isAuth) throw new Error("Unauthenticated");
+
     try {
       const users = await User.find().populate("createdEvents");
       return users.map(user => {
@@ -33,5 +36,20 @@ module.exports = {
     } catch (err) {
       throw err;
     }
+  },
+  login: async ({ email, password }) => {
+    const user = await User.findOne({ email: email });
+
+    if (!user) throw new Error("User does not exists");
+
+    const isEqual = await bcrypt.compare(password, user.password);
+
+    if (!isEqual) throw new Error("Password incorrect");
+
+    const token = jwt.sign({ userId: user.id }, "secretkey", {
+      expiresIn: "1h"
+    });
+
+    return { userId: user.id, token: token, tokenExpiration: 1 };
   }
 };

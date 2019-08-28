@@ -1,17 +1,20 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const graphqlHttp = require('express-graphql');
-const mongoose = require('mongoose');
+const express = require("express");
+const bodyParser = require("body-parser");
+const graphqlHttp = require("express-graphql");
+const mongoose = require("mongoose");
+const isAuth = require("./middleware/is-authenticated");
 
-const graphQlSchema = require('./graphql/schema');
-const graphQlResolvers = require('./graphql/resolvers');
+const graphQlSchema = require("./graphql/schema");
+const graphQlResolvers = require("./graphql/resolvers");
 
 const app = express();
 
 app.use(bodyParser.json());
 
+app.use(isAuth);
+
 app.use(
-  '/graphql',
+  "/graphql",
   graphqlHttp({
     schema: graphQlSchema,
     rootValue: graphQlResolvers,
@@ -20,7 +23,7 @@ app.use(
 );
 
 mongoose
-  .connect('mongodb://127.0.0.1:27017/eventbooking', { useNewUrlParser: true })
+  .connect("mongodb://127.0.0.1:27017/eventbooking", { useNewUrlParser: true })
   .then(() => {
     app.listen((PORT = 5000 || process.env.PORT), () =>
       console.log(`Listening on port ${PORT}`)
